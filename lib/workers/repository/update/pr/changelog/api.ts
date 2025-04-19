@@ -1,3 +1,4 @@
+import { AzureChangeLogSource } from './azure/source';
 import { BitbucketChangeLogSource } from './bitbucket/source';
 import { BitbucketServerChangeLogSource } from './bitbucket-server/source';
 import { GiteaChangeLogSource } from './gitea/source';
@@ -8,6 +9,7 @@ import type { ChangeLogSource } from './source';
 const api = new Map<string, ChangeLogSource>();
 export default api;
 
+api.set('azure', new AzureChangeLogSource());
 api.set('bitbucket', new BitbucketChangeLogSource());
 api.set('bitbucket-server', new BitbucketServerChangeLogSource());
 api.set('gitea', new GiteaChangeLogSource());

@@ -25,6 +25,7 @@ export abstract class ChangeLogSource {
   constructor(
     private readonly platform: ChangeLogPlatform,
     private readonly datasource:
+      | 'azure-tags'
       | 'bitbucket-tags'
       | 'bitbucket-server-tags'
       | 'gitea-tags'

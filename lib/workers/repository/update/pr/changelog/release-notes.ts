@@ -11,6 +11,7 @@ import { newlineRegex, regEx } from '../../../../../util/regex';
 import { coerceString } from '../../../../../util/string';
 import { isHttpUrl, joinUrlParts } from '../../../../../util/url';
 import type { BranchUpgradeConfig } from '../../../../types';
+import * as azure from './azure';
 import * as bitbucket from './bitbucket';
 import * as bitbucketServer from './bitbucket-server';
 import * as gitea from './gitea';
@@ -48,6 +49,11 @@ export async function getReleaseList(
       case 'bitbucket-server':
         logger.trace(
           'Unsupported Bitbucket Server feature. Skipping release fetching.',
+        );
+        return [];
+      case 'azure':
+        logger.trace(
+          'Unsupported Azure DevOps feature. Skipping release fetching.',
         );
         return [];
       default:
@@ -288,6 +294,12 @@ export async function getReleaseNotesMdFileInner(
         );
       case 'bitbucket-server':
         return await bitbucketServer.getReleaseNotesMd(
+          repository,
+          apiBaseUrl,
+          sourceDirectory,
+        );
+      case 'azure':
+        return await azure.getReleaseNotesMd(
           repository,
           apiBaseUrl,
           sourceDirectory,

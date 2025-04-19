@@ -18,6 +18,8 @@ export interface DecoratorCachedRecord {
 
 export type PackageCacheNamespace =
   | '_test-namespace'
+  | 'changelog-azure-notes@v2'
+  | 'changelog-azure-release'
   | 'changelog-bitbucket-notes@v2'
   | 'changelog-bitbucket-release'
   | 'changelog-bitbucket-server-notes@v2'
