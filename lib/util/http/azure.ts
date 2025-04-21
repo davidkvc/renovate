@@ -1,4 +1,5 @@
 import is from '@sindresorhus/is';
+import { type infer as Infer, type ZodType, z } from 'zod';
 import { logger } from '../../logger';
 import { parseUrl } from '../url';
 import type { InternalJsonUnsafeOptions } from './http';
@@ -10,6 +11,42 @@ export class AzureHttp extends HttpBase<HttpOptions> {
     super(type, options);
   }
 
+  async getJsonPaged<Schema extends ZodType<any, any, any>>(
+    url: string,
+    schema: Schema,
+  ): Promise<HttpResponse<Infer<Schema>[]>> {
+    const pagedResponseSchema = z.object({
+      value: z.array(schema),
+    });
+    const items: z.infer<Schema>[] = [];
+
+    let continuationToken = '';
+    const resolvedUrl = parseUrl(url);
+    if (is.nullOrUndefined(resolvedUrl)) {
+      logger.error({ url }, 'Azure: cannot parse url');
+      throw new Error(`Azure: cannot parse path ${url}`);
+    }
+
+    while (true) {
+      resolvedUrl.searchParams.set('continuationToken', continuationToken);
+
+      const res = await this.getJson(
+        resolvedUrl.toString(),
+        pagedResponseSchema,
+      );
+      items.push(res.body.value);
+
+      const continuationTokenHeader = res.headers['x-ms-continuationtoken'];
+      if (!is.nonEmptyStringAndNotWhitespace(continuationTokenHeader)) {
+        return {
+          ...res,
+          body: items,
+        };
+      }
+      continuationToken = continuationTokenHeader;
+    }
+  }
+
   protected override async requestJsonUnsafe<T>(
     method: HttpMethod,
     { url, httpOptions: options }: InternalJsonUnsafeOptions<HttpOptions>,
@@ -18,6 +55,8 @@ export class AzureHttp extends HttpBase<HttpOptions> {
       ...options,
       throwHttpErrors: true,
     };
+    opts.headers ??= {};
+    opts.headers['x-tfs-fedauthredirect'] = 'Suppress';
 
     const resolvedUrl = parseUrl(url);
 
@@ -31,21 +70,6 @@ export class AzureHttp extends HttpBase<HttpOptions> {
       url: resolvedUrl.toString(),
       httpOptions: opts,
     });
-    // const continuationToken = result.headers['x-ms-continuationtoken'] ?? '';
-    // if (continuationToken && isPagedResult(result.body)) {
-    //   resolvedUrl.searchParams.set('continuationToken', continuationToken);
-    //   const nextResult = await this.requestJsonUnsafe<PagedResult<T>>(method, {
-    //     url: resolvedUrl.toString(),
-    //     httpOptions: opts,
-    //   });
-    //   if (isPagedResult(result.body)) {
-    //     result.body.value.push(...nextResult.body.value);
-    //   }
-    // }
     return result;
   }
 }
-
-// function isPagedResult(obj: any): obj is PagedResult {
-//   return is.nonEmptyObject(obj) && Array.isArray(obj.value);
-// }
