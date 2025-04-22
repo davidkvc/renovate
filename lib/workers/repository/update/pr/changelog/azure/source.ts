@@ -1,6 +1,6 @@
 import is from '@sindresorhus/is';
 import { regEx } from '../../../../../../util/regex';
-import { parseUrl } from '../../../../../../util/url';
+import { parseUrl, trimSlashes } from '../../../../../../util/url';
 import type { BranchUpgradeConfig } from '../../../../../types';
 import { ChangeLogSource } from '../source';
 
@@ -20,6 +20,21 @@ export class AzureChangeLogSource extends ChangeLogSource {
     const organization = pathname.slice(1).split('/')[0];
     const projectName = pathname.slice(1).split('/')[1];
     return `${protocol}//${host}/${organization}/${projectName}/`;
+  }
+
+  override getRepositoryFromUrl(config: BranchUpgradeConfig): string {
+    const parsedUrl = parseUrl(config.sourceUrl);
+    if (is.nullOrUndefined(parsedUrl)) {
+      return '';
+    }
+
+    const pathname = parsedUrl.pathname;
+    const repoName = pathname.slice(1).split('/')[3];
+    return trimSlashes(repoName);
+  }
+
+  override hasValidRepository(repository: string): boolean {
+    return !!repository && !repository.includes('/');
   }
 
   getAPIBaseUrl(config: BranchUpgradeConfig): string {
