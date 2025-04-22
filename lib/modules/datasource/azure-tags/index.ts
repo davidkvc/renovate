@@ -22,7 +22,7 @@ export class AzureTagsDatasource extends Datasource {
 
   static getSourceUrl(packageName: string, registryUrl: string): string {
     const normalizedUrl = ensureTrailingSlash(registryUrl);
-    return `${normalizedUrl}_git/${packageName}`;
+    return `${normalizedUrl}/${packageName}`;
   }
 
   @cache({
@@ -34,7 +34,7 @@ export class AzureTagsDatasource extends Datasource {
     registryUrl,
     packageName: repo,
   }: GetReleasesConfig): Promise<ReleaseResult | null> {
-    const url = `${registryUrl!}/_apis/git/repositories/${repo}/refs?filter=tags&$top=100&api-version=7.0`;
+    const url = `${registryUrl!}/git/repositories/${repo}/refs?filter=tags&$top=100&api-version=7.0`;
     const azureTags = (await this.azureHttp.getJsonPaged(url, AzureTagSchema))
       .body;
 
