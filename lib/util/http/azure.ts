@@ -15,9 +15,12 @@ export class AzureHttp extends HttpBase<HttpOptions> {
     url: string,
     schema: Schema,
   ): Promise<HttpResponse<Infer<Schema>[]>> {
-    const pagedResponseSchema = z.object({
-      value: z.array(schema),
-    });
+    const pagedResponseSchema = z.union([
+      z.object({
+        value: z.array(schema),
+      }),
+      z.array(schema),
+    ]);
     const items: z.infer<Schema>[] = [];
 
     let continuationToken = '';
@@ -34,10 +37,20 @@ export class AzureHttp extends HttpBase<HttpOptions> {
         resolvedUrl.toString(),
         pagedResponseSchema,
       );
-      items.push(res.body.value);
+
+      let newItems: z.infer<Schema>[] = [];
+      if (Array.isArray(res.body)) {
+        newItems = res.body;
+      } else {
+        newItems = res.body.value;
+      }
+      items.push(newItems);
 
       const continuationTokenHeader = res.headers['x-ms-continuationtoken'];
-      if (!is.nonEmptyStringAndNotWhitespace(continuationTokenHeader)) {
+      if (
+        !is.nonEmptyStringAndNotWhitespace(continuationTokenHeader) ||
+        newItems.length === 0
+      ) {
         return {
           ...res,
           body: items,
