@@ -528,6 +528,17 @@ function getNotesSourceUrl(
     );
   }
 
+  if (project.type === 'azure') {
+    return joinUrlParts(
+      baseUrl,
+      '_git',
+      repository,
+      '?path=',
+      changelogFile,
+      '&_a=preview',
+    );
+  }
+
   return joinUrlParts(
     baseUrl,
     repository,
