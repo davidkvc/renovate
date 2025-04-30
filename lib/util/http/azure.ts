@@ -44,7 +44,7 @@ export class AzureHttp extends HttpBase<HttpOptions> {
       } else {
         newItems = res.body.value;
       }
-      items.push(newItems);
+      items.push(...newItems);
 
       const continuationTokenHeader = res.headers['x-ms-continuationtoken'];
       if (
