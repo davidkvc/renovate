@@ -1,5 +1,6 @@
 import { cache } from '../../../util/cache/package/decorator';
 import { AzureHttp } from '../../../util/http/azure';
+import { regEx } from '../../../util/regex';
 import { ensureTrailingSlash } from '../../../util/url';
 import { Datasource } from '../datasource';
 import type { GetReleasesConfig, ReleaseResult } from '../types';
@@ -34,6 +35,8 @@ export class AzureTagsDatasource extends Datasource {
     registryUrl,
     packageName: repo,
   }: GetReleasesConfig): Promise<ReleaseResult | null> {
+    const refsTagsPrefix = regEx(/^refs\/tags\//, undefined, false);
+
     const url = `${registryUrl!}/git/repositories/${repo}/refs?filter=tags&$top=100&api-version=7.0`;
     const azureTags = (await this.azureHttp.getJsonPaged(url, AzureTagSchema))
       .body;
@@ -42,8 +45,8 @@ export class AzureTagsDatasource extends Datasource {
       sourceUrl: AzureTagsDatasource.getSourceUrl(repo, registryUrl!),
       registryUrl,
       releases: azureTags.map(({ name }) => ({
-        version: name,
-        gitRef: name,
+        version: name.replace(refsTagsPrefix, ''),
+        gitRef: name.replace(refsTagsPrefix, ''),
         releaseTimestamp: null,
       })),
     };
